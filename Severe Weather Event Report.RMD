@@ -1,0 +1,14 @@
+---
+title: "Severe Weather Event Report"
+author: "SN de Koning"
+date: "21 februari 2016"
+output: html_document
+---
+
+## Synopsis
+
+## Data Processing
+
+## Data Analysis
+
+## Results
