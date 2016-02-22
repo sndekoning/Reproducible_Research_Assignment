@@ -10,6 +10,50 @@ In this report we will examine the effects of extreme weather effects across the
 
 ## Data Processing
 
+The storm database that was used was from the U.S. National Oceanic and Atmospheric Administration's (NOAA). and was aquired as follows:
+
+```{r, cache=TRUE}
+library(dplyr)
+
+getdata <- function(){
+    if(!file.exists("storm_data.csv.bz2")){
+        file_url <- paste("https://d396qusza40orc.cloudfront.net/",
+                    "repdata%2Fdata%2FStormData.csv.bz2",
+                    sep = "")
+        download.file(file_url, "storm_data.csv.bz2")
+    }
+    else print("Data already present")
+}
+
+getdata()
+
+stdata <- tbl_df(read.csv(bzfile("storm_data.csv.bz2")))
+```
+
+```{r}
+## Correcting upper/lowercase discrepancies. 
+stdata_corr <- stdata %>% mutate(EVTYPE = toupper(EVTYPE), 
+                 PROPDMGEXP = toupper(PROPDMGEXP), 
+                 CROPDMGEXP = toupper(CROPDMGEXP))
+
+## Removing the SUMMARIES from the EVTYPE.
+ind_sum <- grep("SUMMARY", stdata_corr$EVTYPE)
+stdata_corr <- stdata_corr[-ind_sum,]
+
+## Creating a new data frame with only the variables to be used.
+stdata_corr <- select(stdata_corr, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP,
+                    CROPDMG, CROPDMGEXP)
+```
+
+The datafile contained two variables which served as multiplier for the financial damages. These multipliers were coded as a character denoting the level of multiplication, i.e. "H" = 1*10^2 (Hundreds), "K" = 1*10^3 (Thousands), "M" = 1*10^6 (Millions) and "B" = 1*10^9 (Billions).
+
+However, these variables also contained a small amount of non-standard multipliers. As these were a negligeble proportion of the total amount of multipliers, these were considered input errors, and as such dropped from the analysis.
+
+```{r}
+dim(subset(stdata_corr, PROPDMGEXP == "+" | PROPDMGEXP == "0" | PROPDMGEXP == "5"| PROPDMGEXP == "6" | PROPDMGEXP == "?" | PROPDMGEXP == "4" | PROPDMGEXP == "2" | PROPDMGEXP == "3" | PROPDMGEXP == "7" | PROPDMGEXP == "-" | PROPDMGEXP == "1" | PROPDMGEXP == "8" | CROPDMGEXP == "?" | CROPDMGEXP == "0" | CROPDMGEXP == "2"))
+```
+
+
 ## Data Analysis
 
 ## Results
