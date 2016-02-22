@@ -1,8 +1,10 @@
 ## Correcting upper/lowercase discrepancies. 
-sdata$EVTYPE <- toupper(sdata$EVTYPE)
+stdata$EVTYPE <- toupper(stdata$EVTYPE)
 
 ## Removing the SUMMARIES from the EVTYPE.
-ind_sum <- grep("SUMMARY", sdata$EVTYPE)
-sdata <- sdata[-ind_sum,]
+ind_sum <- grep("SUMMARY", stdata$EVTYPE)
+stdata <- stdata[-ind_sum,]
 
-## Creating
+## Creating a new data frame with only the variables to be used.
+newstdata <- select(stdata, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP,
+                    CROPDMG, CROPDMGEXP)

@@ -6,9 +6,19 @@ output: html_document
 ---
 
 ## Synopsis
+In this report we will examine the effects of extreme weather effects across the United States. It will try to answer the following two questions, namely which weather events are the most harmful with regard to public health, and which events carry the most economic consequences.
 
 ## Data Processing
 
 ## Data Analysis
 
 ## Results
+
+## Appendix
+
+*Sessioninfo and Date*
+```{r}
+software_environment <-sessionInfo()
+print(software_environment)
+Sys.Date()
+```
