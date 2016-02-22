@@ -30,10 +30,17 @@ exp_transform <- function(damages, exponential){
     }
 }
 
+inv_exp <- c(0:9, "-", "+", "?")
 stdata_ecodmg <- stdata_corr %>% 
     select(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
     filter(PROPDMG != 0 | CROPDMG != 0)
+ 
+stdata_ecodmg <- stdata_ecodmg %>%
+    filter(PROPDMGEXP == "" | PROPDMGEXP == "K" | PROPDMGEXP == "M" | PROPDMGEXP == "B") %>% 
+    filter(CROPDMGEXP == "" | CROPDMGEXP == "K" | CROPDMGEXP == "M" | CROPDMGEXP == "B")
 
-mutate(stdata_ecodmg, PROPDMG_TOT = exp_transform(stdata_ecodmg$PROPDMG, stdata_ecodmg$PROPDMGEXP), 
-           CROPDMG_TOT = exp_transform(stdata_ecodmg$CROPDMG, stdata_ecodmg$CROPDMGEXP))
+stdata_ecodmg <-mutate(stdata_ecodmg, 
+                        PROPDMG_TOT = exp_transform(stdata_ecodmg$PROPDMG, stdata_ecodmg$PROPDMGEXP), 
+                        CROPDMG_TOT = exp_transform(stdata_ecodmg$CROPDMG, stdata_ecodmg$CROPDMGEXP)
+                        )
 
