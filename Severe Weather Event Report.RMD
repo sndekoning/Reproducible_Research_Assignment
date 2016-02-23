@@ -61,7 +61,7 @@ nonstd <- nrow(subset(stdata_corr, PROPDMGEXP == "+" | PROPDMGEXP == "0" | PROPD
 nonstd / nrow(stdata_corr)
 ```
 
-The data table for financial damages was constructed as follows
+The data table for financial damages was constructed as follows.
 ```{r}
 exp_transform <- function(damages, exponential){
     if(exponential == ""){
@@ -71,12 +71,13 @@ exp_transform <- function(damages, exponential){
         damages * 1000
     }
     else if(exponential == "M"){
-        damages * 1E6
+        damages * 1E+06
     }
     else if(exponential == "B"){
-        damages * 1E9
+        damages * 1E+09
     }
 }
+
 
 stdata_ecodmg <- stdata_corr %>% 
     select(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
@@ -86,9 +87,8 @@ stdata_ecodmg <- stdata_ecodmg %>%
     filter(PROPDMGEXP == "" | PROPDMGEXP == "K" | PROPDMGEXP == "M" | PROPDMGEXP == "B") %>% 
     filter(CROPDMGEXP == "" | CROPDMGEXP == "K" | CROPDMGEXP == "M" | CROPDMGEXP == "B")
 
-stdata_ecodmg <-mutate(stdata_ecodmg, 
-                        PROPDMG_TOT = exp_transform(stdata_ecodmg$PROPDMG, stdata_ecodmg$PROPDMGEXP), 
-                        CROPDMG_TOT = exp_transform(stdata_ecodmg$CROPDMG, stdata_ecodmg$CROPDMGEXP))
+stdata_ecodmg$CROPDMG_TOT <- mapply(exp_transform, stdata_ecodmg$CROPDMG, stdata_ecodmg$CROPDMGEXP)
+stdata_ecodmg$PROPDMG_TOT <- mapply(exp_transform, stdata_ecodmg$PROPDMG, stdata_ecodmg$PROPDMGEXP) 
 ```
 
 ## Results
