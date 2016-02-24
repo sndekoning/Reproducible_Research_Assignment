@@ -96,10 +96,16 @@ stdata_ecodmg$PROPDMG_TOT <- mapply(exp_transform, stdata_ecodmg$PROPDMG, stdata
 library(ggplot2)
 ```
 
-Which type of weather event costs the most by way of public health damages?
+Which type of weather event is the most damaging to public health?
+As we can see from the plot, Tornadoes cause the most fatalities and injuries, followed by floods.
 
 ```{r}
-## some code
+p <- ggplot(data = top_total, aes(EVTYPE, TOTAL))
+p + geom_bar(stat = "identity") + 
+    labs(title = "Total Public Health Damage", 
+         x = "Weather Event", 
+         y = "Total injured or killed") +
+    coord_flip()
 ```
 
 Which type of weather event costs the most in financial damages?

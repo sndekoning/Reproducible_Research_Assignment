@@ -14,6 +14,8 @@ top_total <- stdata_pubdmg %>%
 
 p <- ggplot(data = top_total, aes(EVTYPE, TOTAL))
 p + geom_bar(stat = "identity") + 
-    labs(title = "Total Public Health Damage", x = "Weather Event", 
-                                        y = "Total injured or killed")
+    labs(title = "Total Public Health Damage", 
+         x = "Weather Event", 
+         y = "Total injured or killed") +
+    coord_flip()
     
