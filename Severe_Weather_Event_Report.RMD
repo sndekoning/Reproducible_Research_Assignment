@@ -1,0 +1,145 @@
+---
+title: "Severe Weather Event Report"
+author: "SN de Koning"
+date: "21 februari 2016"
+output: html_document
+---
+
+## Synopsis
+In this report we will examine the effects of extreme weather effects across the United States. It will try to answer the following two questions, namely which weather events are the most harmful with regard to public health, and which events carry the most economic consequences.
+
+## Data Processing
+
+The storm database that was used was from the U.S. National Oceanic and Atmospheric Administration's (NOAA). and was aquired as follows:
+
+```{r, message=FALSE}
+library(dplyr)
+```
+
+First data is retrieved from the server and stored in a dplyr table dataframe for easier transformation.
+```{r, cache = TRUE}
+getdata <- function(){
+    if(!file.exists("storm_data.csv.bz2")){
+        file_url <- paste("https://d396qusza40orc.cloudfront.net/",
+                    "repdata%2Fdata%2FStormData.csv.bz2",
+                    sep = "")
+        download.file(file_url, "storm_data.csv.bz2")
+    }
+}
+
+getdata()
+
+stdata <- tbl_df(read.csv(bzfile("storm_data.csv.bz2")))
+```
+
+String and character imput contained capitalization differences, and were transformed to be all uppercase. Futher the summary events were dropped as they contained no usefull information pertaining to the different weather even types. Finally only the to be used variables were extracted and stored in a new dataframe. 
+```{r}
+stdata_corr <- stdata %>% mutate(EVTYPE = toupper(EVTYPE), 
+                 PROPDMGEXP = toupper(PROPDMGEXP), 
+                 CROPDMGEXP = toupper(CROPDMGEXP))
+
+ind_sum <- grep("SUMMARY", stdata_corr$EVTYPE)
+stdata_corr <- stdata_corr[-ind_sum,]
+
+stdata_corr <- select(stdata_corr, EVTYPE, FATALITIES, INJURIES, PROPDMG, PROPDMGEXP,
+                    CROPDMG, CROPDMGEXP)
+```
+#### Damage to public health.
+
+To be able to determine the damages to public health in the form of casualties and injuries caused by the weather events a seperate dataframe was constructed containing the variables with the type of weather event "EVTYPE", and the variables "FATALITIES", and "INJURIES". Entries containing no fatalities or injuries were dropped.
+
+```{r}
+stdata_pubdmg <- stdata_corr %>% 
+    select(EVTYPE, FATALITIES, INJURIES) %>%
+    filter(FATALITIES != 0 | INJURIES != 0) %>%
+    mutate(TOTAL = FATALITIES + INJURIES)
+```
+
+#### Crop and property damage.
+The datafile contained two variables which served as multiplier for the financial damages. These multipliers were coded as a character denoting the level of multiplication, i.e. "H" = 1 x 10^2 (Hundreds), "K" = 1 x 10^3 (Thousands), "M" = 1 x 10^6 (Millions) and "B" = 1 x 10^9 (Billions).
+
+However, these variables also contained a small amount of non-standard multipliers. As these were a negligeble proportion of the total amount of multipliers, these were considered input errors, and as such dropped from the construction of the financial damage data table, and as such from the analysis.
+
+```{r}
+nonstd <- nrow(subset(stdata_corr, PROPDMGEXP == "+" | PROPDMGEXP == "0" | PROPDMGEXP == "5"| PROPDMGEXP == "6" | PROPDMGEXP == "?" | PROPDMGEXP == "4" | PROPDMGEXP == "2" | PROPDMGEXP == "3" | PROPDMGEXP == "7" | PROPDMGEXP == "-" | PROPDMGEXP == "1" | PROPDMGEXP == "8" | CROPDMGEXP == "?" | CROPDMGEXP == "0" | CROPDMGEXP == "2"))
+
+nonstd / nrow(stdata_corr)
+```
+
+The data table for financial damages was constructed as follows. exp_transform calculates the proper financial costs with the multiplier. Then only the to be used variables were extracted, while dropping the zero-cost events. After this only the standard multipliers were extracted and using the previously defined function two new variables were constructed with the total cost per eventtype. 
+```{r}
+exp_transform <- function(damages, exponential){
+    if(exponential == ""){
+        damages * 1
+    }
+    else if(exponential == "K"){
+        damages * 1000
+    }
+    else if(exponential == "M"){
+        damages * 1E+06
+    }
+    else if(exponential == "B"){
+        damages * 1E+09
+    }
+}
+
+
+stdata_ecodmg <- stdata_corr %>% 
+    select(EVTYPE, PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+    filter(PROPDMG != 0 | CROPDMG != 0)
+ 
+stdata_ecodmg <- stdata_ecodmg %>%
+    filter(PROPDMGEXP == "" | PROPDMGEXP == "K" | PROPDMGEXP == "M" | PROPDMGEXP == "B") %>% 
+    filter(CROPDMGEXP == "" | CROPDMGEXP == "K" | CROPDMGEXP == "M" | CROPDMGEXP == "B")
+
+stdata_ecodmg$CROPDMG_TOT <- mapply(exp_transform, stdata_ecodmg$CROPDMG, stdata_ecodmg$CROPDMGEXP)
+stdata_ecodmg$PROPDMG_TOT <- mapply(exp_transform, stdata_ecodmg$PROPDMG, stdata_ecodmg$PROPDMGEXP) 
+```
+
+## Results
+```{r}
+library(ggplot2)
+```
+
+Which type of weather event is the most damaging to public health?
+
+First we take a look at the top 50 most destructive events.
+```{r}
+top_total_pub <- stdata_pubdmg %>%
+   arrange(desc(TOTAL)) %>%
+    top_n(50, TOTAL)
+```
+
+As we can see from the plot, Tornadoes cause the most fatalities and injuries, followed by floods.
+```{r}
+p1 <- ggplot(data = top_total_pub, aes(EVTYPE, TOTAL))
+p1 + geom_bar(stat = "identity") + 
+    labs(title = "Total Public Health Damage", 
+         x = "Weather Event", 
+         y = "Total injured or killed") +
+    coord_flip()
+```
+
+Which type of weather event costs the most in financial damages?
+Again we first take a look at the top 50 most destructive events.
+
+```{r}
+top_total_eco <- stdata_ecodmg %>%
+    mutate(TOTAL = CROPDMG_TOT + PROPDMG_TOT) %>%
+    arrange(desc(TOTAL)) %>%
+    top_n(50, TOTAL)
+```
+
+And from the plot we can see that floods are the most costly even type, followed by hurricanes and typhoons. 
+
+```{r}
+p2 <- ggplot(data = top_total_eco, aes(EVTYPE, TOTAL))
+p2 + geom_bar(stat = "identity") + 
+    labs(title = "Total Financial Damage", 
+         x = "Weather Event",
+         y = "Total Damages in USD") +
+    coord_flip()
+```
+
+It is recommended that the aforementioned types of weather events should be specifically the point of focus in constructing strategies to reduce the damages caused by them.
+

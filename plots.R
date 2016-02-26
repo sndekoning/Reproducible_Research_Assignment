@@ -12,10 +12,21 @@ top_total <- stdata_pubdmg %>%
    arrange(desc(TOTAL)) %>%
     top_n(50, TOTAL)
 
-p <- ggplot(data = top_total, aes(EVTYPE, TOTAL))
-p + geom_bar(stat = "identity") + 
+p1 <- ggplot(data = top_total_pub, aes(EVTYPE, TOTAL))
+p1 + geom_bar(stat = "identity") + 
     labs(title = "Total Public Health Damage", 
          x = "Weather Event", 
          y = "Total injured or killed") +
     coord_flip()
-    
+
+top_total_eco <- stdata_ecodmg %>%
+    mutate(TOTAL = CROPDMG_TOT + PROPDMG_TOT) %>%
+    arrange(desc(TOTAL)) %>%
+    top_n(50, TOTAL)
+
+p2 <- ggplot(data = top_total_eco, aes(EVTYPE, TOTAL))
+p2 + geom_bar(stat = "identity") + 
+    labs(title = "Total Financial Damage", 
+         x = "Weather Event"
+         y = "Total Damages in USD")
+    coord_flip()
